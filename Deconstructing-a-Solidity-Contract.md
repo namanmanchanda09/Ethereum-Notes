@@ -454,15 +454,41 @@ Once again `131-141` is the non payable check. Continuing from instruction `144`
 
 Now once the above opcodes are executed, we would be jumping to `251` i.e the `balanceOf` function body. Execute the rest of the opcodes for now, until you reach a jump. we should be jumping back to `balanceOf` wrapper. But here's the thing. Instead we find ourselves at `112` which is the `totalSupply` wrapper. The reason for this is that since `totalSupply` and `balanceOf` both return a `uint256` value, the chunk of code that grabs a `uint256` valye from the stack & returns it via memory is identical and could be reused. The Solidity compiler could be noticing that part of the code generated for these two wrappers is the same, and deciding to reuse the code to save on gas. Well, it actually does just that, and we wouldn’t be observing this if optimizations were not enabled when we compiled the contract.
 
+NOTE
+
 `A function’s wrapper is an intermediary that unpacks the calldata for a function’s body to use, routes execution to it, and then repacks whatever comes back for the user. This wrapper structure is there for all functions that are part of the public interface of a contract in Solidity.`
 
 
+## 5. Function Bodies
 
+First, we understood the difference between a contract’s creation time and runtime bytecode; next, we understood how the entry point of execution from any call or transaction is routed to specific functions via the function selector; and finally, we saw how incoming transaction data is unpacked for a function to consume, and the data produced by a function is repacked for the user via function wrappers. In this section, we will (at last) look at the actual execution of a function, or what we’ve been calling so far a “function’s body”.
 
+Let's debug the `balanceOf` function once again. Continue executing the instructions until you reach the function body i.e instruction `251`. 
 
+*BALANCEOF(ADDRESS) FUNCTION BODY*
+```
+252 PUSH20 ffffffffffffffffffffffffffffffffffffffff
+273 AND
+274 PUSH1 00
+276 SWAP1
+277 DUP2
+278 MSTORE
+279 PUSH1 01
+281 PUSH1 20
+283 MSTORE
+284 PUSH1 40
+286 SWAP1
+287 SHA3
+288 SLOAD
+289 SWAP1
+290 JUMP
+```
 
+Now the top element of stack contains the address passed as argument. The wrapper unpacked the calldata for us so that we can execute the function body. The instruction `252` pushes the 20 byte value and `AND` masks the 32 byte address into the correct type. The instructions from `274-278` stores the address into the memory. Now if you remember how previously we saved the data inside a mapping - calculating the hash using the address and the location of the variable in the storage. We will we doing the same thing once again to retrive the data from the mapping. 
 
+`279` pushes `0x01` followed by `0x20`. `MSTORE` stores `0x01` in the memory. Following a simple swap, `SHA3` calculates the hash of the data in memory starting from `0x00` and upto `0x40` length which is basically hashing the first 32 byte words. Now hash adds the 32 byte data in the stack. `SLOAD` loads the data from the storage to the stack. Finally after the swap, we jump to `totalSupply` function's wrapper. 
 
+## 6. The Metadata hash
 
 
 
