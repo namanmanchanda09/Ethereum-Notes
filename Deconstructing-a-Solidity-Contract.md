@@ -369,6 +369,28 @@ contract MyContract {
 
 Here, `0x5B38Da6a701c568545dCfcB03FcB875f56beddC4` is my `owner` address. This would be different for you. The result of this function is `0x70a082310000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4`. What's important is the first **4** bytes. These are the hash of the signature `balanceOf(address)` and the last **32** bytes that follow contrain the address we passed as parameter. But Ethereum addresses are 20 bytes long and here we get **32** bytes of data. This is because ABI always uses 32-byte “words” or “slots” to hold parameters used in function calls.
 
+Now getting back to the instruction where we left. Instruction 13 i.e `013 PUSH4 ffffffff` pushes `0xffffffff` to the stack followed by 29 byte long data being pushed to stack. Also pushing `0x00` to the stack.
+
+- `CALLDATALOAD` takes one parameter and reads a chunk of 32 bytes from the calldata at that position.
+
+So in this case, it would push 32 bytes of data from the *calldata* to the stack. You might see that the calldata is of 36 bytes - the first 4 bytes are the function signature and last 20 bytes are the address. This opcode would only put first 32 bytes of calldata to the stack - removing the last 4 bytes of address. This might look weird - breaking the owner address but this won't cause any issue we'll see why. 
+
+STACK
+```
+0:0x70a082310000000000000000000000005b38da6a701c568545dcfcb03fcb875f
+1:0x0000000100000000000000000000000000000000000000000000000000000000
+2:0x00000000000000000000000000000000000000000000000000000000ffffffff
+```
+
+That's how the stack should look for now. The last few elements at position `0x00` would be different according to your address. Now the `DIV` will divide the stack top with the 2nd element leaving only the function signature i.e `0x70a08231` at the stack top. The next instruction `AND` does an *AND* operation on the top 2 stack elements. This is to make sure that the signature hash is exactly eight bytes long, masking out anything else, if anything were present.
+
+Until now we have checked if the calldata is `<4` and if so, reverted. If not, we have got the function id in the stack.
+
+Next we push `0x18160ddd` to the stack i.e the function id of the `totalSupply` function and then duplicates the function id of `balanceOf` function. Now `EQ` will match the calldata with the `totalSupply` id and fail skipping the `JUMPI` at instruction **63**. Now once again the duplicate and equate instructions will execute and will get matched this time. The `EQ` would push `0x01` to the stack top as result of the match. The `JUMPI` this time would happen to instruction `0x0082` (decimal 130). 
+
+NOTE
+
+`This is the core part about function selector. These equality checks for each public or external function of the contract. This acts as some sort of switch statement that simply routes execution to the correct part of the code. It is our “hub”.`
 
 
 
