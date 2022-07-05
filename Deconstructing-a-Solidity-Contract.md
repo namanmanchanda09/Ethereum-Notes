@@ -392,6 +392,71 @@ NOTE
 
 `This is the core part about function selector. These equality checks for each public or external function of the contract. This acts as some sort of switch statement that simply routes execution to the correct part of the code. It is our “hub”.`
 
+## 4. Function Wrappers
+
+Now we know the use of Function Selector. If the `totalSupply` function is called, execution will be redirected to location `91`, `balanceOf` to `130`, and so on. Once again let's call the `totalSupply` function in Remix and start the debugger. The *Transaction Slider* would point to the code of `totalSupply`. Slide it backwards to reach instruction `91` to the `JUMPDEST` where we jumped after the function selector. 
+
+At this point the stack contains 
+```
+0:0x0000000000000000000000000000000000000000000000000000000018160ddd
+```
+
+which is the function id for `totalSupply`. The instructions `92-103` are the non payable check. This we already know about. Moving on to instruction `104` - `POP ` would remove the top element of the stack. Next we push `0x0070`(decimal 112) and `0x00f5`(decimal 245) to the stack. The `JUMP` occurs and we get to instruction `245`. 
+
+*The function body*
+```
+245 JUMPDEST
+246 PUSH1 00
+248 SLOAD
+249 SWAP1
+250 JUMP
+```
+
+Here after executing the following opcodes - we would jump back to `112` which we added to the stack earlier. Skip how the function works for now. Simply keep executing it until you jump back to `112`. You'll observe `0x02710` at the top of the stack now. So this is what the function body did for us. Now we got the value we have to return and the next set of instructions would `RETURN` it.
+
+*UINT356 MEMORY RETURNER*
+```
+112 JUMPDEST
+113 PUSH1 40
+115 DUP1
+116 MLOAD
+117 SWAP2
+118 DUP3
+119 MSTORE
+120 MLOAD
+121 SWAP1
+122 DUP2
+123 SWAP1
+124 SUB
+125 PUSH1 20
+127 ADD
+128 SWAP1
+129 RETURN
+```
+
+Now instructions `113-116` will read the current free pointer. The instructions `117-119` will duplicate the value that the function body placed in the stack to that free space and stores `10000` in the memory at location `0x80`. The next few opcodes `120-124` are completely redundant and do nothing. The instruction `125` will push `0x20` to stack i.e decimal 32. The next `SWAP` will rearrange the order in stack and `RETURN` would return the data from the memory i.e `10000`.
+
+So, we saw how the code was routed from the function selector, into this wrapper structure that went into the function body, and out of the function body and then dealt with the translation of whatever the function body produced, and packed this data for returning it to the user.
+
+Now we are going to do the same process for `balanceOf` function. Call the function and start the debugging. 
+
+Once again `131-141` is the non payable check. Continuing from instruction `144` we push `0x70` to the stack, followed by another 20 bytes pushing to the stack, and once again pushing `0x04` to the stack. The `CALLDATALOAD` would read 32 bytes of data skipping the first 4 bytes of data from the calldata.
+
+```
+144 PUSH2 0070
+147 PUSH20 ffffffffffffffffffffffffffffffffffffffff
+168 PUSH1 04
+170 CALLDATALOAD
+171 AND
+172 PUSH2 00fb
+175 JUMP
+```
+
+Now once the above opcodes are executed, we would be jumping to `251` i.e the `balanceOf` function body. Execute the rest of the opcodes for now, until you reach a jump. we should be jumping back to `balanceOf` wrapper. But here's the thing. Instead we find ourselves at `112` which is the `totalSupply` wrapper. The reason for this is that since `totalSupply` and `balanceOf` both return a `uint256` value, the chunk of code that grabs a `uint256` valye from the stack & returns it via memory is identical and could be reused. The Solidity compiler could be noticing that part of the code generated for these two wrappers is the same, and deciding to reuse the code to save on gas. Well, it actually does just that, and we wouldn’t be observing this if optimizations were not enabled when we compiled the contract.
+
+`A function’s wrapper is an intermediary that unpacks the calldata for a function’s body to use, routes execution to it, and then repacks whatever comes back for the user. This wrapper structure is there for all functions that are part of the public interface of a contract in Solidity.`
+
+
 
 
 
