@@ -94,4 +94,123 @@ When the EVM executes code, it does so top down with no exceptions — i.e.,
 
 *Back to remix debugger, take the slider and move all the way to left.*
 
-The first few instructions can be ignored but we find our 1st `JUMPI` at instruction **11**.
+The first few instructions can be ignored but we find our 1st `JUMPI` at instruction **11**. If it doesn’t jump, it will continue through instructions 12 to 15 and end up in a `REVERT`, which would halt execution. But if it does jump, it will skip these instructions to the location 16 (hex **0x0010**, which was pushed to the stack at instruction *8*. Instruction 16 is a `JUMPDEST`. So far so good.
+
+At location *68* we find a `RETURN` opcode and a `STOP` at *69*. The control of this contract will always end at either *15* i.e `REVERT` or *68*. But the code ends at location *566*. So the set of instructions from (**0-69**) are called *creation code* of the contract. 
+
+NOTE
+
+`
+The set of instructions we’ve just traversed (0 to 69) is what’s known as the “creation code” of a contract. It will never be a part of the contract’s code per se, but is only executed by the EVM once during the transaction that creates the contract. This piece of code is in charge of setting the created contract’s initial state, as well as returning a copy of its runtime code. The remaining 497 instructions (70 to 566) which, as we saw, will never be reached by the execution flow, are precisely the code that will be part of the deployed contract.
+`
+
+Take a look at the [deconstruction diagram](https://gists.rawgit.com/ajsantander/23c032ec7a722890feed94d93dff574a/raw/a453b28077e9669d5b51f2dc6d93b539a76834b8/BasicToken.svg) and see the first split we made b/w creation code and runtime code.
+
+**Understanding Creation Code**
+
+Now we will be splitting the creation code further to understand each part of it.
+
+<img src="https://lh4.googleusercontent.com/H5-5mHxayCSR3zS1hgyy8UEC31y7n3d4ZOo6nf0-ZZ9Oz6idygz4o5_US6_MJejxDzTWg7bl9NOSiz_JuZIxmjH036Awhy2xD2RvLACuXHsqL06NV0goug8Z7O2F3ta7pDBlr-Le">
+
+The creation code gets executed in a transaction, which returns a copy of the runtime code, which is the actual code of the contract. The contract’s constructor is part of the creation code; it will not be present in the contract’s code once it is deployed. Now we will be looking at all ~70 instructions in the debugger. Shift the slider to extreme left and use the down arrow to execute each opcode in Remix. Make sure to carefully observe the changes in stack, memory etc.
+
+*FREE MEMORY POINTER*
+```
+000 PUSH1 80
+002 PUSH1 40
+004 MSTORE
+```
+
+In the above instructions - `PUSH` instructions are composed of 2 or more bytes. So `PUSH 80` is really two instructions. Hence constituting instruction #1 and #3.
+
+- `PUSH1` pushes **1** byte onto the top of the stack.
+- `MSTORE` grabs the last **2** items from the stack & stores one of them in memory.
+
+```
+mstore(0x40, 0x80)
+         |     |
+         |     What to store.
+        Where to store.
+(in memory)
+```
+
+The 1st opcode will push **0x80** to stack. The 2nd will push **0x40** to stack. See the stack changes for both the operations. The 3rd instruction will store the number `0x80` in the memory at position `0x40`. At this point, check the memory changes. 
+
+*NON PAYABLE CHECK*
+```
+005 CALLVALUE
+006 DUP1
+007 ISZERO
+008 PUSH2 0010
+011 JUMPI
+012 PUSH1 00
+014 DUP1
+015 REVERT
+```
+
+- `CALLVALUE` pushes the amount of wei involved in the creation transaction.
+- `DUP1` duplicated the first element on the stack.
+- `ISZERO` replaces the top element of stack by 1 if it's 0.
+- `PUSH2` can push **2** bytes to the stack.
+
+In solidity we can write the above chunk of assembly like
+
+```solidity
+if(msg.value != 0) revert();
+```
+
+This code was not actually part of our original Solidity source, but was instead injected by the compiler because we did not declare the constructor as payable. In the most recent versions of Solidity, functions that do not explicitly declare themselves as payable cannot receive ether.
+
+Now the `JUMPI` at *11* will skip through instructions 12-15 and jump to *16* if there is no ether involved. Otherwise `REVERT` will execute with both parameters as 0. Make sure to follow everything along in Remix.
+
+*RETRIEVE CONSTRUCTOR PARAMETERS*
+```
+016 JUMPDEST
+017 POP
+018 PUSH1 40
+020 MLOAD
+021 PUSH1 20
+023 DUP1
+024 PUSH2 0217
+027 DUP4
+028 CODECOPY
+029 DUP2
+030 ADD
+031 PUSH1 40
+033 SWAP1
+034 DUP2
+035 MSTORE
+036 SWAP1
+037 MLOAD
+```
+
+Continue running the following instructions in the Remix. Instruction *18* push `0x40` to stack. `MLOAD` replaces the first element of stack with memory data at `0x40`. That should be `0x80` pushed to the stack. Then `0x20` will be pushed and duplicated. Next `PUSH2 0217` pushes `0x0217` (decimal 535) to the stack and duplicate the 4th value in stack i.e `0x80`. 
+
+- `CODECOPY` takes 3 arguments from the stack top.
+
+STACK
+```
+0:0x0000000000000000000000000000000000000000000000000000000000000080
+1:0x0000000000000000000000000000000000000000000000000000000000000217
+2:0x0000000000000000000000000000000000000000000000000000000000000020
+```
+
+```
+codecopy(0x80, 0x0217, 0x20)
+         |     |        |
+         |     |        number of bytes to copy
+         |     instruction number to copy from.
+         target position.
+```
+
+The entire code has 566 instructions. So `CODECOPY` is trying to copy last 32 bytes of code i.e from `0x0217`(decimal 535) to end of code. This is because when a contract with constructor arguments is deployed - the arguments are appended to the end of the code. Now check the memory at `0x80` and you'll see the `0x00..002710` i.e the number *10000* which we passed as initial supply.
+
+
+
+
+
+
+
+
+
+
