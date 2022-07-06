@@ -490,7 +490,15 @@ Now the top element of stack contains the address passed as argument. The wrappe
 
 ## 6. The Metadata hash
 
+<img src="https://i0.wp.com/miro.medium.com/max/695/1*07vt6obMDNLssCWZj5DNKA.png?resize=695%2C556&ssl=1">
 
+If you analyze all the possible execution flows in this contract, you'll see that this code is totally unreachable. And so this code isn't executable code. This code is the `contract's metadata` which includes information about the contract such as its source code, how it was compiled, etc and it's injected as a hash into the contract's own bytecode. 
+
+`This hash can be used in Swarm as a lookup URL to find the contract’s metadata. Swarm is basically a decentralized storage system, similar to IPFS. The idea here is that some platform like Etherscan identifies this structure in the bytecode and provides the location of the bytecode’s metadata within a decentralized storage system. A user can query such metadata and use it as a means to prove that the bytecode being seen is in fact the product of a given Solidity source code, with a certain version and precise configuration of the Solidity compiler in a deterministic manner. This hash is a digital signature of sorts, that ties together a piece of compiled bytecode with its origins. If you wanted to verify that the bytecode is legit, you would have to hash the metadata yourself and verify that you get the same hash.`
+
+And that’s not all, the metadata hash can be used by wallet applications to fetch the contract’s metadata, extract it’s source, recompile it with the compiler settings used originally, verify that the produced bytecode matches the contract’s bytecode, then fetch the contract’s JSON ABI and look at the NATSPEC documentation of the function being called.
+
+More on this can be read [here](https://docs.soliditylang.org/en/v0.4.25/metadata.html#encoding-of-the-metadata-hash-in-the-bytecode).
 
 
 
