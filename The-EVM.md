@@ -30,5 +30,13 @@ The EVM is a `virtual machine`. Every node in the Ethereum system must get the *
 
 ![Screenshot 2022-07-06 at 9 20 52 PM](https://user-images.githubusercontent.com/35381035/177592025-3c7687d1-324a-4358-82d4-7730b0c22285.png)
 
-EVM layer node consists of a physical computer running any OS - windows, linux, mac. On top of that, there's an Ethereum Node - `Geth` or `Parity`
+EVM layer node consists of a physical computer running any OS - windows, linux, mac. On top of that, there's an Ethereum Node - `Geth` or `Parity`. On top of that is the Ethereum Virtual Machine. The following is a simple EVM architectue. All the implementations of EVM maintain this virtual machine.
+
+![Screenshot 2022-07-06 at 10 55 30 PM](https://user-images.githubusercontent.com/35381035/177608493-eabf1731-7bfd-4d37-ac6f-c9f6ddfb4865.png)
+
+The Virtual ROM pulls up the EVM code of the contract that the EVM would be working on. The Machine State is volatile. So whenever the EVM interact with a contract - it pulls up the contract code and the contract storage from the world state. 
+
+![Screenshot 2022-07-06 at 11 05 59 PM](https://user-images.githubusercontent.com/35381035/177610144-35cd4b93-f33c-4bcd-bddd-124bdc56ce24.png)
+
+ The EVM - the `CPU` of the World Computer is single threaded. 
    
