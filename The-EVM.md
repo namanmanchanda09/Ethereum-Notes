@@ -38,5 +38,7 @@ The Virtual ROM pulls up the EVM code of the contract that the EVM would be work
 
 ![Screenshot 2022-07-06 at 11 05 59 PM](https://user-images.githubusercontent.com/35381035/177610144-35cd4b93-f33c-4bcd-bddd-124bdc56ce24.png)
 
- The EVM - the `CPU` of the World Computer is single threaded. 
+The EVM - the `CPU` of the World Computer is single threaded. For each transaction: code of contract being called is loaded, program counter set to zero, contract storage loaded, memory is set to all zeros, all block and environment variables are set. if gas limit is hit(out of gas exception): no changes to Ethereum state are applied, except sender's nonce incrementing and their ETH balance going down to pay for wasting the EVM's time. 
+
+EVM understands the bytecode compiled from the solidity/vyper language. EVM translated the bytecode into opcodes and each opcode has a gas associated with it. That's the real world cost needed to execute that particular opcode by the EVM. 
    
