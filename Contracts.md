@@ -187,6 +187,48 @@ contract B {
 }
 ```
 
+## 4. Functions
+
+**Fn Parameters**
+
+```solidity
+contract A {
+    uint[2][] public arr;
+    function setArray(uint[2][] memory _arr) external {
+        arr = _arr;
+    }
+}
+```
+ **Return Variables**
+ 
+ ```solidity
+ contract A {
+    function fn(uint a, uint b) public pure returns(uint sum, uint product) {
+        sum=a+b;
+        product=a*b;
+    }
+}
+```
+
+**State Mutability**
+
+Functions can be declared `view` in which case they promise not to modify the state.
+
+The following statements are considered modifying the state:
+
+- Writing to state variables.
+- Emitting events.
+- Creating other contracts.
+- Using selfdestruct.
+- Sending Ether via calls.
+- Calling any function not marked view or pure.
+- Using low-level calls.
+- Using inline assembly that contains certain opcodes.
+
+
+
+
+
 
 
 
