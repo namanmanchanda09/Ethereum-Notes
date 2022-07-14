@@ -225,6 +225,16 @@ The following statements are considered modifying the state:
 - Using low-level calls.
 - Using inline assembly that contains certain opcodes.
 
+Functions can be declared `pure` in which case they promise not to read from or modify the state. In particular, it should be possible to evaluate a `pure` function at compile-time given only its inputs and `msg.data`, but without any knowledge of the current blockchain state. This means that reading from `immutable` variables can be a non-pure operation.
+
+NOTE
+
+`It is not possible to prevent functions from reading the state at the level of the EVM, it is only possible to prevent them from writing to the state (i.e. only view can be enforced at the EVM level, pure can not).`
+
+## 5. Special Functions
+
+**Receive Ether Fn**
+
 
 
 
