@@ -106,4 +106,87 @@ contract A {
 }
 ```
 
+**Reentrancy modifier**
+
+This prevents `msg.sender` to call `f` again while a function call is already being executed.
+
+```solidity
+contract Mutex {
+    bool internal locked;
+
+    modifier noReentrancy() {
+        require(
+            !locked,
+            "Reentrant call"
+        );
+        locked = true;
+        _;
+        locked = false;
+    }
+
+    function f()
+    public
+    noReentrancy
+    returns(uint) {
+        (bool success,) = msg.sender.call("");
+        require(success);
+        return 42;
+    }
+}
+```
+[more on reentrancy](https://www.youtube.com/watch?v=4Mm3BCyHtDY)
+
+Multiple modifiers are applied to a function by specifying them in a whitespace-separated list and are evaluated in the order presented. Modifiers cannot implicitly access or change the arguments and return values of functions they modify. Their values can only be passed to them explicitly at the point of invocation. Explicit returns from a modifier or function body only leave the current modifier or function body. Return variables are assigned and control flow continues after the `_` in the preceding modifier.
+
+```solidity
+contract Mutex {
+    uint public x;
+
+    modifier check() {
+        require(true);
+        _;
+        x = 42;
+    }
+
+    function f()
+    public
+    check {
+        x = 10;
+    }
+}
+```
+
+After calling `f` the value of `x` would be `42`.
+
+**NOTE**
+
+*The `_` symbol can appear in the modifier multiple times. Each occurrence is replaced with the function body.*
+
+Arbitrary expressions are allowed for modifier arguments and in this context, all symbols visible from the function are visible in the modifier. Symbols introduced in the modifier are not visible in the function (as they might change by overriding).
+
+## 3. Constant And Immutable variables
+
+For `constant` variables, the value has to be a constant at compile time and it has to be assigned where the variable is declared. Any expression that accesses storage, blockchain data (e.g. `block.timestamp`, `address(this).balance` or `block.number`) or execution data (`msg.value` or `gasleft()`) or makes calls to external contracts is disallowed.
+
+Variables declared as `immutable` are a bit less restricted than those declared as `constant`: Immutable variables can be assigned an arbitrary value in the constructor of the contract or at the point of their declaration. They can be assigned only once and can, from that point on, be read even during construction time.
+
+Both of the following would work.
+
+```solidity
+contract A {
+
+    uint public immutable name=42;
+
+}
+
+contract B {
+    uint public immutable name;
+    constructor(){
+        name=42;
+    }
+}
+```
+
+
+
 
