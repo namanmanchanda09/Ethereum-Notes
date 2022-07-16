@@ -346,7 +346,58 @@ State variable shadowing is considered as an error. A derived contract can only 
 
 **Constructor**
 
+A constructor is an optional function that is executed upon contract creation.
 
+```solidity
+contract X {
+    string public name;
+
+    constructor(string memory _name) {
+        name=_name;
+    }
+}
+
+
+contract Y {
+    string public text;
+
+    constructor(string memory _text) {
+        text=_text;
+    }
+}
+
+// both are correct ways to initialize parent contracts
+
+contract B is X("My name's X"), Y("My name's Y") {}
+
+contract C is X, Y {
+    constructor(string memory _name, string memory _text) X(_name) Y(_text) {}
+}
+```
+
+Parent constructors are always called in the order of inheritance regardless of the order of parent contracts listed in the constructor of the child contract. 
+
+
+```solidity
+// Order of constructors called:
+// 1. X
+// 2. Y
+// 3. D
+
+contract D is X, Y {
+    constructor() X("X was called") Y("Y was called") {}
+}
+
+contract E is X, Y {
+    constructor() Y("Y was called") X("X was called") {}
+}
+```
+
+- Solidity supports multiple inheritance. Contracts can inherit other contract by using the `is` keyword.
+- Function that is going to be overridden by a child contract must be declared as `virtual`.
+- Function that is going to override a parent function must use the keyword `override`.
+- Order of inheritance is important.
+- You have to list the parent contracts in the order from *most base-like* to *most derived*.
 
 
 
