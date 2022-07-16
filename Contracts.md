@@ -332,6 +332,19 @@ Events are inheritable members of contracts. When you call them, they cause the 
 
 It is possible to request a Merkle proof for logs, so if an external entity supplies a contract with such a proof, it can check that the log actually exists inside the blockchain. You have to supply block headers because the contract can only see the last 256 block hashes.
 
+You can add the attribute `indexed` to up to three parameters which adds them to a special data structure known as [“topics”](https://docs.soliditylang.org/en/v0.8.15/abi-spec.html#abi-events) instead of the data part of the log. A topic can only hold a single word (32 bytes) so if you use a reference type for an indexed argument, the Keccak-256 hash of the value is stored as a topic instead.
+
+All parameters without the `indexed` attribute are ABI-encoded into the data part of the log.
+
+Topics allow you to search for events, for example when filtering a sequence of blocks for certain events. You can also filter events by the address of the contract that emitted the event.
+
+## 8. Inheritance
+
+When a contract inherits from other contracts, only a single contract is created on the blockchain, and the code from all the base contracts is compiled into the created contract. This means that all internal calls to functions of base contracts also just use internal function calls (`super.f(..)` will use JUMP and not a message call).
+
+State variable shadowing is considered as an error. A derived contract can only declare a state variable `x`, if there is no visible state variable with the same name in any of its bases.
+
+**Constructor**
 
 
 
