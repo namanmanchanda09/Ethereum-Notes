@@ -235,7 +235,102 @@ NOTE
 
 **Receive Ether Fn**
 
+A contract can have at most one `receive` function, declared using `receive() external payable { ... }` (without the `function` keyword). This function cannot have arguments, cannot return anything and must have `external` visibility and `payable` state mutability. It can be virtual, can override and can have modifiers.
 
+```solidity
+contract A {
+    event Received(uint amount);
+    receive() external payable{
+        emit Received(msg.value);
+    }
+
+    function getBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+}
+
+contract B {
+    constructor() payable{}
+    function sendEther(address payable _a, uint _amount) public {
+        _a.transfer(_amount);
+    } 
+}
+```
+
+**Fallback Fn**
+
+A contract can have at most one `fallback` function, declared using either `fallback () external [payable]` or `fallback (bytes calldata input) external [payable] returns (bytes memory output)` (both without the `function` keyword). This function must have `external` visibility. A fallback function can be virtual, can override and can have modifiers.
+
+The fallback function is executed on a call to the contract if none of the other functions match the given function signature, or if no data was supplied at all and there is no receive Ether function. The fallback function always receives data, but in order to also receive Ether it must be marked `payable`.
+
+```solidity
+contract A {
+
+    event ReceiveEmitted(uint amount);
+    event FallbackEmitted(uint amount);
+
+    receive() external payable{
+        emit ReceiveEmitted(msg.value);
+    }
+
+    fallback() external payable{
+        emit FallbackEmitted(msg.value);
+    }
+
+    function getBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+}
+
+contract B {
+
+    constructor() payable{}
+
+    function sendEther(address payable _a) public {
+        (bool success, ) = _a.call("nonExistingFunction()"); // fallback called
+        require(success);
+    }
+
+    function sendEther2(address payable _a) public {
+        (bool success, ) = _a.call{value: 1 ether}("nonExistingFunction()"); //fallback called
+        require(success);
+    }
+
+    function sendEther3(address payable _a) public {
+        (bool success, ) = _a.call{value: 1 ether}(""); // receive called
+        require(success);
+    }
+}
+```
+
+`fallback` is called for all messages sent to a contract except plain Ether transfers. Any call with non-empty calldata will execute `fallback`. For plain Ether transfers, i.e for every call with empty calldata, `receive` is called.
+
+## 6. Fn overloading
+
+A contract can have multiple functions of the same name but with different parameter types. This process is called “overloading” and also applies to inherited functions.
+
+```solidity
+contract A {
+
+    function fn(uint value) public pure returns(uint out) {
+        out = value;
+    }
+
+    function fn(uint value, bool really) public pure returns(uint out) {
+        if (really) {
+            out = value;
+        }
+    }
+}
+```
+
+## 7. Events
+
+Solidity events give an abstraction on top of the EVM’s logging functionality. Applications can subscribe and listen to these events through the RPC interface of an Ethereum client.
+
+Events are inheritable members of contracts. When you call them, they cause the arguments to be stored in the transaction’s log - a special data structure in the blockchain. These logs are associated with the address of the contract, are incorporated into the blockchain, and stay there as long as a block is accessible (forever as of now, but this might change with Serenity). The Log and its event data is not accessible from within contracts (not even from the contract that created them).
+
+It is possible to request a Merkle proof for logs, so if an external entity supplies a contract with such a proof, it can check that the log actually exists inside the blockchain. You have to supply block headers because the contract can only see the last 256 block hashes.
 
 
 
