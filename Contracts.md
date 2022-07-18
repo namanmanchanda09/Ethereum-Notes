@@ -393,6 +393,35 @@ contract E is X, Y {
 }
 ```
 
+If a derived contract does not specify the arguments to all of its base contracts’ constructors, it must be declared abstract.
+
+```solidity
+contract Base {
+    uint x;
+    constructor(uint x_) { x = x_; }
+}
+
+// Either directly specify in the inheritance list...
+contract Derived1 is Base(7) {
+    constructor() {}
+}
+
+// or through a "modifier" of the derived constructor...
+contract Derived2 is Base {
+    constructor(uint y) Base(y * y) {}
+}
+
+// or declare abstract...
+abstract contract Derived3 is Base {
+}
+
+// and have the next concrete derived contract initialize it.
+contract DerivedFromDerived is Derived3 {
+    constructor() Base(10 + 10) {}
+}
+```
+
+
 - Solidity supports multiple inheritance. Contracts can inherit other contract by using the `is` keyword.
 - Function that is going to be overridden by a child contract must be declared as `virtual`.
 - Function that is going to override a parent function must use the keyword `override`.
@@ -475,6 +504,72 @@ contract B is A {
     }
 }
 ```
+
+- Functions with the `private` visibility cannot be `virtual`.
+- Functions without implementation have to be marked `virtual` outside of interfaces. In interfaces, all functions are automatically considered `virtual`.
+- Starting from Solidity *0.8.8*, the `override` keyword is not required when overriding an interface function, except for the case where the function is defined in multiple bases.
+
+**Function Overriding**
+
+Base functions can be overriden by inheriting contracts to change their behavior if they are marked as `virtual`. The overriding function must then use the `override` keyword in the function header. The overriding function may only change the visibility of the overridden function from `external` to `public`. The mutability may be changed to a more strict one following the order: `nonpayable` can be overridden by `view` and `pure`. `view` can be overridden by `pure`. `payable` is an exception and cannot be changed to any other mutability.
+
+```solidity
+contract Base
+{
+    function foo() virtual external view {}
+}
+
+contract Middle is Base {}
+
+contract Inherited is Middle
+{
+    function foo() override public pure {}
+}
+```
+
+For multiple inheritance, the most derived base contracts that define the same function must be specified explicitly after the `override` keyword.
+
+```solidity
+contract Base1
+{
+    function foo() virtual public {}
+}
+
+contract Base2
+{
+    function foo() virtual public {}
+}
+
+contract Inherited is Base1, Base2
+{
+    // Derives from multiple bases defining foo(), so we must explicitly
+    // override it
+    function foo() public override(Base1, Base2) {}
+}
+```
+
+**Modifier Overriding**
+
+There is no overloading for modifiers. 
+
+```solidity
+contract Base1
+{
+    modifier foo() virtual {_;}
+}
+
+contract Base2
+{
+    modifier foo() virtual {_;}
+}
+
+contract Inherited is Base1, Base2
+{
+    modifier foo() override(Base1, Base2) {_;}
+}
+```
+
+
 
 
 
