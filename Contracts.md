@@ -399,5 +399,83 @@ contract E is X, Y {
 - Order of inheritance is important.
 - You have to list the parent contracts in the order from *most base-like* to *most derived*.
 
+**Linearization**
+
+```solidity
+
+/* Graph of inheritance
+    A
+   / \
+  B   C
+ / \ /
+F  D,E 
+
+*/
+
+
+contract A {
+    function fn() public pure virtual returns(string memory) {
+        return "A"; // A
+    }
+}
+
+contract B is A {
+    function fn() public pure override virtual returns(string memory) {
+        return "B"; // B
+    }
+
+}
+
+contract C is A {
+    function fn() public pure virtual override returns (string memory) {
+        return "C"; // C
+    }
+}
+
+contract D is B, C {
+    function fn() public pure override(B,C) returns(string memory) {
+        return super.fn(); // C
+    }
+}
+
+contract E is C, B {
+    function fn() public pure override(C, B) returns(string memory) {
+        return super.fn(); // B
+    }
+}
+
+contract F is A, B {
+    function fn() public pure override(A, B) returns(string memory) {
+        return super.fn(); // B
+    }
+}
+
+contract G is B, A { // error
+}
+```
+
+Contracts can inherit from multiple parent contracts. When a function is called that is defined multiple times in different contracts, parent contracts are searched from `right to left`, and `in depth-first manner`.
+
+Inheritance must be ordered from `most base-like` to `most derived`. In contract `G` - we firstly try to inherit B and then A, but A is the parent contract of `B` i.e more base like than `B` hence defining `G` gives an error.
+
+**Shadowing Inherited State Variables**
+
+```solidity
+contract A {
+    string public name = "Contract A";
+
+    function getName() public view returns(string memory) {
+        return name;
+    }
+}
+
+contract B is A {
+    constructor() {
+        name = "Contract B";
+    }
+}
+```
+
+
 
 
