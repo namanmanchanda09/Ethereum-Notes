@@ -1,4 +1,4 @@
-# Contracts
+# Types
 
 Solidity is a statically typed language. The concept of `null` or `undefined` value does not exist in Solidity but newly created variables always have a default value.
 
@@ -52,6 +52,16 @@ contract PrimitiveTypes {
 **Operations on Integers**
 
 Shifts
+
+`x << y` means `x * 2**y`
+`x >> y` means `x / 2**y`
+
+*Overflow checks are never performed for shift operations as they are done for arithmetic operations. Instead, the result is always truncated.*
+
+
+Addition, Subtraction & Multiplication
+
+
 
 
 
