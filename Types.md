@@ -10,7 +10,7 @@ Solidity is a statically typed language. The concept of `null` or `undefined` va
  
  All the logical operators work in the usual way.
  
- ### Integers
+### Integers
  
  `int`/`uint` - signed & unsigned integers of various sizes. Integers in Solidity are restricted to a certain range. 
 
