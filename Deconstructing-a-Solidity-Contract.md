@@ -102,9 +102,7 @@ At location *68* we find a `RETURN` opcode and a `STOP` at *69*. The control of 
 
 NOTE
 
-`
-The set of instructions we’ve just traversed (0 to 69) is what’s known as the “creation code” of a contract. It will never be a part of the contract’s code per se, but is only executed by the EVM once during the transaction that creates the contract. This piece of code is in charge of setting the created contract’s initial state, as well as returning a copy of its runtime code. The remaining 497 instructions (70 to 566) which, as we saw, will never be reached by the execution flow, are precisely the code that will be part of the deployed contract.
-`
+`The set of instructions we’ve just traversed (0 to 69) is what’s known as the “creation code” of a contract. It will never be a part of the contract’s code per se, but is only executed by the EVM once during the transaction that creates the contract. This piece of code is in charge of setting the created contract’s initial state, as well as returning a copy of its runtime code. The remaining 497 instructions (70 to 566) which, as we saw, will never be reached by the execution flow, are precisely the code that will be part of the deployed contract.`
 
 Take a look at the [deconstruction diagram](https://gists.rawgit.com/ajsantander/23c032ec7a722890feed94d93dff574a/raw/a453b28077e9669d5b51f2dc6d93b539a76834b8/BasicToken.svg) and see the first split we made b/w creation code and runtime code.
 
