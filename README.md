@@ -6,3 +6,8 @@ The following is a series of short notes to learn about EVM + solidity + foundry
 4. [Contracts](https://namanmanchanda09.github.io/Ethereum-Notes/Contracts)
 5. [UniswapV1 + Foundry Tests](https://github.com/namanmanchanda09/Uniswap-V1-clone)
 
+
+
+-----------------------------
+Compiled by [Naman](http://twitter.com/namanmanchanda2).
+
